@@ -1,66 +1,118 @@
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const galleryEl = document.querySelector('.gallery');
+const loaderClass = document.querySelector('.loader');
+const galleryClass = document.querySelector('.gallery');
+const showMoreBtnClass = document.querySelector('.show-more-btn');
 
-const loaderEl = document.querySelector('.loader');
-
-const lightbox = new SimpleLightbox('.gallery a', {
+let gallery = new SimpleLightbox('.gallery a', {
   captionsData: 'alt',
   captionDelay: 250,
+  preloading: false,
 });
+
+export function showLoader() {
+  loaderClass.classList.remove('hidden');
+}
+
+export function removeLoader() {
+  loaderClass.classList.add('hidden');
+}
+
+export function clearGallery() {
+  galleryClass.innerHTML = '';
+}
 
 export function createGallery(images) {
   const markup = images
     .map(
-      ({
-        webformatURL,
-        largeImageURL,
-        tags,
-        likes,
-        views,
-        comments,
-        downloads,
-      }) => `
-      <li class="gallery-item">
-        <a class="gallery-link" href="${largeImageURL}">
-          <img class="gallery-img" src="${webformatURL}" alt="${tags}" />
-        </a>
-        <div class="gallery-info">
-          <div class="gallery-info-item">
-            <span class="gallery-info-label">Likes</span>
-            <span>${likes}</span>
-          </div>
-          <div class="gallery-info-item">
-            <span class="gallery-info-label">Views</span>
-            <span>${views}</span>
-          </div>
-          <div class="gallery-info-item">
-            <span class="gallery-info-label">Comments</span>
-            <span>${comments}</span>
-          </div>
-          <div class="gallery-info-item">
-            <span class="gallery-info-label">Downloads</span>
-            <span>${downloads}</span>
-          </div>
-        </div>
-      </li>
-    `
+      el => `<li class="gallery-item">
+      <a class="gallery-link" href="${el.largeImageURL}">
+        <img
+          class="gallery-image"
+          src="${el.webformatURL}"
+          alt="${el.tags}"
+          width="360"
+          height="200"
+        />
+      </a>
+      <div class="card">
+        <ul>
+          <li>
+            <p class="title">Likes</p>
+            <p class="subtitle">${el.likes}</p>
+          </li>
+          <li>
+            <p class="title">Views</p>
+            <p class="subtitle">${el.views}</p>
+          </li>
+          <li>
+            <p class="title">Comments</p>
+            <p class="subtitle">${el.comments}</p>
+          </li>
+          <li>
+            <p class="title">Downloads</p>
+            <p class="subtitle">${el.downloads}</p>
+          </li>
+        </ul>
+      </div>
+    </li>`
     )
     .join('');
-
-  galleryEl.insertAdjacentHTML('beforeend', markup);
-  lightbox.refresh();
+  galleryClass.innerHTML = markup;
+  gallery.refresh();
 }
 
-export function clearGallery() {
-  galleryEl.innerHTML = '';
+export function appendToGallery(images) {
+  const markup = images
+    .map(
+      el => `<li class="gallery-item">
+      <a class="gallery-link" href="${el.largeImageURL}">
+        <img
+          class="gallery-image"
+          src="${el.webformatURL}"
+          alt="${el.tags}"
+          width="360"
+          height="200"
+        />
+      </a>
+      <div class="card">
+        <ul>
+          <li>
+            <p class="title">Likes</p>
+            <p class="subtitle">${el.likes}</p>
+          </li>
+          <li>
+            <p class="title">Views</p>
+            <p class="subtitle">${el.views}</p>
+          </li>
+          <li>
+            <p class="title">Comments</p>
+            <p class="subtitle">${el.comments}</p>
+          </li>
+          <li>
+            <p class="title">Downloads</p>
+            <p class="subtitle">${el.downloads}</p>
+          </li>
+        </ul>
+      </div>
+    </li>`
+    )
+    .join('');
+  galleryClass.insertAdjacentHTML('beforeend', markup);
+  gallery.refresh();
 }
 
-export function showLoader() {
-  loaderEl.classList.add('is-visible');
+export function removeLoadMoreButton() {
+  showMoreBtnClass.classList.add('hidden');
 }
 
-export function hideLoader() {
-  loaderEl.classList.remove('is-visible');
+export function showLoadMoreButton() {
+  showMoreBtnClass.classList.remove('hidden');
+}
+
+export function getImageDimensions() {
+  const imageClass = document.querySelector('.gallery-item');
+  const gap = 24;
+  return imageClass.getBoundingClientRect().height + 2 * gap;
 }
