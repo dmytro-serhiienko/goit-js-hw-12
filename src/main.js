@@ -13,25 +13,23 @@ import {
 import { getImages } from './js/pixabay-api';
 const API_KEY = '53125865-ed9f58673896f3ad0b9dfa3df';
 
-const submitBtnClass = document.querySelector('.submit-btn');
-const inputQueryClass = document.querySelector('.form-input');
-const showMoreBtnClass = document.querySelector('.show-more-btn');
-//Initialize global variables
+const form = document.querySelector('#search-form');
+const inputQuery = document.querySelector('.form-input');
+const showMoreBtn = document.querySelector('.show-more-btn');
 
 let page = 1;
-let limit = 15;
-let currentquery = '';
+const limit = 15;
+let currentQuery = '';
 let totalHits = 0;
 let allImages = [];
 
-// Start with the task
 removeLoader();
 removeLoadMoreButton();
 
-submitBtnClass.addEventListener('click', async evt => {
+form.addEventListener('submit', async evt => {
   evt.preventDefault();
   removeLoadMoreButton();
-  const query = inputQueryClass.value.trim();
+  const query = inputQuery.value.trim();
   if (!query) {
     clearGallery();
     removeLoadMoreButton();
@@ -42,13 +40,17 @@ submitBtnClass.addEventListener('click', async evt => {
   showLoader();
 
   try {
-    currentquery = query;
+    currentQuery = query;
     page = 1;
     allImages = [];
     clearGallery();
 
-    const images = await getImages(query, page, limit);
-    if (images.array.length === 0) {
+    const { array: images, totalHits: hits } = await getImages(
+      query,
+      page,
+      limit
+    );
+    if (images.length === 0) {
       removeLoader();
       removeLoadMoreButton();
       iziToast.error({
@@ -59,12 +61,11 @@ submitBtnClass.addEventListener('click', async evt => {
     }
 
     removeLoader();
-    allImages = images.array;
-    createGallery(images.array);
-    totalHits = images.totalHits;
-    page += 1;
+    allImages = images;
+    renderGallery(allImages, true);
+    totalHits = hits;
 
-    if (page * limit <= totalHits) {
+    if (allImages.length < totalHits) {
       showLoadMoreButton();
     } else {
       iziToast.show({
@@ -73,6 +74,7 @@ submitBtnClass.addEventListener('click', async evt => {
       });
       removeLoadMoreButton();
     }
+    page += 1;
   } catch (error) {
     removeLoader();
     console.log(error);
@@ -83,16 +85,16 @@ submitBtnClass.addEventListener('click', async evt => {
   }
 });
 
-showMoreBtnClass.addEventListener('click', async evt => {
+showMoreBtn.addEventListener('click', async evt => {
   evt.preventDefault();
   removeLoadMoreButton();
   showLoader();
   try {
-    const newImages = await getImages(currentquery, page, limit);
-    allImages = allImages.concat(newImages.array);
+    const { array: newImages } = await getImages(currentQuery, page, limit);
+    allImages = allImages.concat(newImages);
     removeLoader();
 
-    appendToGallery(newImages.array);
+    renderGallery(newImages, false);
 
     setTimeout(() => {
       let elemHeight = getImageDimensions();
@@ -102,9 +104,7 @@ showMoreBtnClass.addEventListener('click', async evt => {
       });
     }, 100);
 
-    page += 1;
-
-    if (page * limit > totalHits) {
+    if (allImages.length >= totalHits) {
       removeLoadMoreButton();
       iziToast.show({
         message: "We're sorry, but you've reached the end of search results.",
@@ -113,6 +113,7 @@ showMoreBtnClass.addEventListener('click', async evt => {
     } else {
       showLoadMoreButton();
     }
+    page += 1;
   } catch (error) {
     console.log(error);
     removeLoader();
@@ -123,3 +124,11 @@ showMoreBtnClass.addEventListener('click', async evt => {
     });
   }
 });
+
+function renderGallery(images, isNewSearch = false) {
+  if (isNewSearch) {
+    createGallery(images);
+  } else {
+    appendToGallery(images);
+  }
+}
