@@ -11,25 +11,25 @@ import {
   appendToGallery,
 } from './js/render-functions';
 import { getImages } from './js/pixabay-api';
-const API_KEY = '53125865-ed9f58673896f3ad0b9dfa3df';
+const API_KEY = '53868223-5cc179c49926eee1c1fc25cc4';
 
-const form = document.querySelector('#search-form');
-const inputQuery = document.querySelector('.form-input');
-const showMoreBtn = document.querySelector('.show-more-btn');
+const btnSubEl = document.querySelector('.submit-btn');
+const inputEl = document.querySelector('.form-input');
+const btnShowEl = document.querySelector('.show-more-btn');
 
 let page = 1;
-const limit = 15;
-let currentQuery = '';
+let limit = 15;
+let currentquery = '';
 let totalHits = 0;
-let allImages = [];
+let allImg = [];
 
 removeLoader();
 removeLoadMoreButton();
 
-form.addEventListener('submit', async evt => {
-  evt.preventDefault();
+btnSubEl.addEventListener('click', async event => {
+  event.preventDefault();
   removeLoadMoreButton();
-  const query = inputQuery.value.trim();
+  const query = inputEl.value.trim();
   if (!query) {
     clearGallery();
     removeLoadMoreButton();
@@ -40,17 +40,13 @@ form.addEventListener('submit', async evt => {
   showLoader();
 
   try {
-    currentQuery = query;
+    currentquery = query;
     page = 1;
-    allImages = [];
+    allImg = [];
     clearGallery();
 
-    const { array: images, totalHits: hits } = await getImages(
-      query,
-      page,
-      limit
-    );
-    if (images.length === 0) {
+    const img = await getImages(query, page, limit);
+    if (img.array.length === 0) {
       removeLoader();
       removeLoadMoreButton();
       iziToast.error({
@@ -61,11 +57,12 @@ form.addEventListener('submit', async evt => {
     }
 
     removeLoader();
-    allImages = images;
-    renderGallery(allImages, true);
-    totalHits = hits;
+    allImg = img.array;
+    createGallery(img.array);
+    totalHits = img.totalHits;
+    page += 1;
 
-    if (allImages.length < totalHits) {
+    if (page * limit <= totalHits) {
       showLoadMoreButton();
     } else {
       iziToast.show({
@@ -74,7 +71,6 @@ form.addEventListener('submit', async evt => {
       });
       removeLoadMoreButton();
     }
-    page += 1;
   } catch (error) {
     removeLoader();
     console.log(error);
@@ -85,26 +81,28 @@ form.addEventListener('submit', async evt => {
   }
 });
 
-showMoreBtn.addEventListener('click', async evt => {
-  evt.preventDefault();
+btnShowEl.addEventListener('click', async event => {
+  event.preventDefault();
   removeLoadMoreButton();
   showLoader();
   try {
-    const { array: newImages } = await getImages(currentQuery, page, limit);
-    allImages = allImages.concat(newImages);
+    const newImages = await getImages(currentquery, page, limit);
+    allImg = allImg.concat(newImages.array);
     removeLoader();
 
-    renderGallery(newImages, false);
+    appendToGallery(newImages.array);
 
     setTimeout(() => {
-      let elemHeight = getImageDimensions();
+      let elHeight = getImageDimensions();
       window.scrollBy({
-        top: elemHeight * 2,
+        top: elHeight * 2,
         behavior: 'smooth',
       });
     }, 100);
 
-    if (allImages.length >= totalHits) {
+    page += 1;
+
+    if (page * limit > totalHits) {
       removeLoadMoreButton();
       iziToast.show({
         message: "We're sorry, but you've reached the end of search results.",
@@ -113,7 +111,6 @@ showMoreBtn.addEventListener('click', async evt => {
     } else {
       showLoadMoreButton();
     }
-    page += 1;
   } catch (error) {
     console.log(error);
     removeLoader();
@@ -124,11 +121,3 @@ showMoreBtn.addEventListener('click', async evt => {
     });
   }
 });
-
-function renderGallery(images, isNewSearch = false) {
-  if (isNewSearch) {
-    createGallery(images);
-  } else {
-    appendToGallery(images);
-  }
-}
