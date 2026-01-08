@@ -13,7 +13,7 @@ import {
 import { getImages } from './js/pixabay-api';
 const API_KEY = '53868223-5cc179c49926eee1c1fc25cc4';
 
-const btnSubEl = document.querySelector('.submit-btn');
+const formEl = document.querySelector('#search-form');
 const inputEl = document.querySelector('.form-input');
 const btnShowEl = document.querySelector('.show-more-btn');
 
@@ -26,7 +26,7 @@ let allImg = [];
 removeLoader();
 removeLoadMoreButton();
 
-btnSubEl.addEventListener('click', async event => {
+formEl.addEventListener('submit', async event => {
   event.preventDefault();
   removeLoadMoreButton();
   const query = inputEl.value.trim();
@@ -60,9 +60,8 @@ btnSubEl.addEventListener('click', async event => {
     allImg = img.array;
     createGallery(img.array);
     totalHits = img.totalHits;
-    page += 1;
 
-    if (page * limit <= totalHits) {
+    if (allImg.length < totalHits) {
       showLoadMoreButton();
     } else {
       iziToast.show({
@@ -86,6 +85,7 @@ btnShowEl.addEventListener('click', async event => {
   removeLoadMoreButton();
   showLoader();
   try {
+    page += 1;
     const newImages = await getImages(currentquery, page, limit);
     allImg = allImg.concat(newImages.array);
     removeLoader();
@@ -100,9 +100,7 @@ btnShowEl.addEventListener('click', async event => {
       });
     }, 100);
 
-    page += 1;
-
-    if (page * limit > totalHits) {
+    if (allImg.length >= totalHits) {
       removeLoadMoreButton();
       iziToast.show({
         message: "We're sorry, but you've reached the end of search results.",
